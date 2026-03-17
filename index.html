@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мобильный банк — 3 версии</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:system-ui,-apple-system,sans-serif;
+  background:#111;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:24px 16px;
+  -webkit-font-smoothing:antialiased;color:#fff;
+}
+
+/* ══════ VERSION SWITCHER ══════ */
+.header{text-align:center;margin-bottom:20px;}
+.header h1{font-size:32px;font-weight:700;margin-bottom:6px;}
+.header p{font-size:14px;color:#888;max-width:500px;margin:0 auto;line-height:1.5;}
+
+.ver-tabs{
+  display:flex;gap:4px;margin-bottom:20px;
+  background:#222;border-radius:16px;padding:4px;
+}
+.ver-tab{
+  padding:10px 20px;border-radius:12px;
+  font-size:14px;font-weight:600;
+  background:transparent;color:#888;
+  border:none;cursor:pointer;font-family:inherit;
+  transition:all 0.2s;white-space:nowrap;
+}
+.ver-tab.on{background:#ffd800;color:#1a1a1a;}
+.ver-tab:hover:not(.on){color:#ccc;}
+
+.ver-desc{
+  text-align:center;font-size:13px;color:#666;
+  margin-bottom:20px;max-width:500px;min-height:36px;
+  line-height:1.5;
+}
+
+/* ══════ VERSIONS CONTAINER ══════ */
+.version{display:none;flex-direction:column;align-items:center;}
+.version.on{display:flex;}
+
+/* ══════ CONTEXT TABS (for v3) ══════ */
+.ctx-tabs{
+  display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;
+}
+.ctx-tab{
+  padding:8px 14px;border-radius:12px;
+  font-size:13px;font-weight:600;
+  background:#222;color:#888;
+  border:none;cursor:pointer;font-family:inherit;
+  transition:all 0.2s;
+}
+.ctx-tab.on{background:#ffd800;color:#1a1a1a;}
+.ctx-tab:hover:not(.on){background:#333;color:#ccc;}
+
+/* ══════ PHONE FRAME ══════ */
+.phone{
+  width:390px;height:844px;border-radius:44px;overflow:hidden;
+  position:relative;background:#f5f5f5;flex-shrink:0;
+  box-shadow:0 0 0 10px #1a1a1a,0 0 0 12px #2e2e2e,0 32px 64px rgba(0,0,0,0.5);
+}
+.phone.wbg{background:#fff;}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:34px;background:#1a1a1a;border-radius:0 0 20px 20px;z-index:100;}
+.sbar{position:relative;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:14px 28px 4px;margin-top:34px;font-size:12px;font-weight:600;color:#1a1a1a;}
+.sbar-r{display:flex;gap:5px;align-items:center;}
+.sbar svg{width:16px;height:16px;fill:#1a1a1a;}
+
+/* ══════ SHARED ══════ */
+.wrap{position:relative;overflow:hidden;}
+.wrap.h1{height:calc(100% - 52px - 76px);}
+.wrap.h2{height:calc(100% - 52px - 82px);}
+.wrap.h3{height:calc(100% - 52px);}
+.scr{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;opacity:0;pointer-events:none;transition:opacity 0.3s ease;scrollbar-width:none;}
+.scr::-webkit-scrollbar{display:none}
+.scr.on{opacity:1;pointer-events:auto;}
+
+/* ═══════════════════════════════════════════ */
+/* V1 STYLES */
+/* ═══════════════════════════════════════════ */
+.v1 .balance-section{background:#fff;border-radius:24px;padding:20px;margin:0 16px 12px;}
+.v1 .balance-label{font-size:13px;color:#888;margin-bottom:6px;}
+.v1 .balance-row{display:flex;align-items:baseline;gap:4px;}
+.v1 .balance-amount{font-size:34px;font-weight:700;color:#1a1a1a;letter-spacing:-0.5px;}
+.v1 .balance-currency{font-size:22px;font-weight:600;color:#1a1a1a;}
+.v1 .balance-accounts{display:flex;gap:8px;margin-top:16px;}
+.v1 .account-pill{flex:1;background:#f5f5f5;border-radius:14px;padding:12px;}
+.v1 .account-pill-label{font-size:11px;color:#999;margin-bottom:4px;}
+.v1 .account-pill-amount{font-size:15px;font-weight:600;color:#1a1a1a;}
+.v1 .quick-actions{display:flex;gap:10px;margin:0 16px 12px;}
+.v1 .action-tile{flex:1;background:#fff;border-radius:18px;padding:16px 8px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;}
+.v1 .action-tile:active{background:#f5f5f5;}
+.v1 .action-tile-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.v1 .action-tile-icon.yellow{background:#ffd800;}
+.v1 .action-tile-icon.light-purple{background:#f0e6ff;}
+.v1 .action-tile-icon.light-blue{background:#e0f0ff;}
+.v1 .action-tile-icon.light-green{background:#e0ffe8;}
+.v1 .action-tile-label{font-size:12px;font-weight:500;color:#555;text-align:center;}
+.v1 .promo-banner{border-radius:20px;padding:18px 20px;margin:0 16px 12px;display:flex;align-items:center;gap:14px;cursor:pointer;position:relative;}
+.v1 .promo-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.v1 .promo-text{flex:1;}
+.v1 .promo-title{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:3px;}
+.v1 .promo-sub{font-size:12px;color:#888;}
+.v1 .promo-dismiss{position:absolute;top:10px;right:12px;font-size:16px;color:#ccc;cursor:pointer;}
+.v1 .section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 20px;}
+.v1 .section-hdr-title{font-size:17px;font-weight:600;color:#1a1a1a;}
+.v1 .section-hdr-link{font-size:13px;font-weight:500;color:#888;cursor:pointer;}
+.v1 .tx-card{background:#fff;border-radius:20px;padding:4px 0;margin:0 16px 12px;}
+.v1 .tx-item{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;}
+.v1 .tx-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.v1 .tx-info{flex:1;min-width:0;}
+.v1 .tx-name{font-size:15px;font-weight:500;color:#1a1a1a;}
+.v1 .tx-detail{font-size:12px;color:#999;margin-top:2px;}
+.v1 .tx-right{text-align:right;flex-shrink:0;}
+.v1 .tx-sum{font-size:15px;font-weight:600;color:#1a1a1a;}
+.v1 .tx-sum.income{color:#34a853;}
+.v1 .tx-time{font-size:11px;color:#bbb;margin-top:2px;}
+.v1 .tx-divider{height:1px;background:#f5f5f5;margin:0 16px;}
+.v1 .screen-title{font-size:22px;font-weight:700;color:#1a1a1a;margin-bottom:18px;padding:0 20px;}
+.v1 .fav-row{display:flex;gap:16px;overflow-x:auto;padding:0 16px 4px;scrollbar-width:none;}
+.v1 .fav-row::-webkit-scrollbar{display:none}
+.v1 .fav-item{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:64px;cursor:pointer;}
+.v1 .fav-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;}
+.v1 .fav-name{font-size:11px;color:#888;text-align:center;}
+.v1 .transfer-section{background:#fff;border-radius:20px;padding:18px;margin:0 16px 12px;}
+.v1 .transfer-input-row{display:flex;gap:10px;align-items:center;}
+.v1 .transfer-input{flex:1;height:48px;border:none;background:#f5f5f5;border-radius:14px;padding:0 16px;font-size:15px;font-family:inherit;color:#1a1a1a;outline:none;}
+.v1 .transfer-input::placeholder{color:#bbb;}
+.v1 .transfer-btn{height:48px;padding:0 20px;background:#ffd800;border:none;border-radius:14px;font-size:14px;font-weight:600;color:#1a1a1a;cursor:pointer;font-family:inherit;}
+.v1 .category-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 16px 12px;}
+.v1 .cat-tile{background:#fff;border-radius:16px;padding:14px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;}
+.v1 .cat-tile-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.v1 .cat-tile-label{font-size:11px;font-weight:500;color:#555;text-align:center;}
+.v1 .h-filter{padding:8px 14px;border-radius:12px;font-size:13px;font-weight:500;white-space:nowrap;background:#fff;color:#888;border:none;cursor:pointer;font-family:inherit;}
+.v1 .h-filter.active{background:#ffd800;color:#1a1a1a;font-weight:600;}
+.v1 .history-filters{display:flex;gap:8px;margin:0 16px 16px;overflow-x:auto;scrollbar-width:none;}
+.v1 .history-filters::-webkit-scrollbar{display:none}
+.v1 .history-summary{display:flex;gap:10px;margin:0 16px 16px;}
+.v1 .summary-pill{flex:1;background:#fff;border-radius:16px;padding:14px 16px;}
+.v1 .summary-pill-label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
+.v1 .summary-pill-val{font-size:18px;font-weight:700;}
+.v1 .summary-pill-val.red{color:#e53935;}
+.v1 .summary-pill-val.green{color:#34a853;}
+.v1 .day-label{font-size:13px;font-weight:600;color:#888;margin:16px 0 8px 20px;}
+.v1 .profile-hero{background:#fff;border-radius:24px;padding:28px 20px 20px;display:flex;flex-direction:column;align-items:center;margin:0 16px 12px;}
+.v1 .p-avatar{width:72px;height:72px;border-radius:50%;background:#ffd800;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#1a1a1a;margin-bottom:12px;}
+.v1 .p-name{font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:4px;}
+.v1 .p-sub{font-size:13px;color:#999;}
+.v1 .profile-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 16px 12px;}
+.v1 .p-action{background:#fff;border-radius:18px;padding:16px 8px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;}
+.v1 .p-action-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#f5f5f5;}
+.v1 .p-action-label{font-size:12px;font-weight:500;color:#555;text-align:center;}
+.v1 .pm-card{background:#fff;border-radius:20px;padding:4px 0;margin:0 16px 12px;}
+.v1 .pm-item{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;}
+.v1 .pm-icon{width:38px;height:38px;border-radius:10px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.v1 .pm-text{flex:1;}
+.v1 .pm-title{font-size:15px;font-weight:500;color:#1a1a1a;}
+.v1 .pm-sub{font-size:12px;color:#999;margin-top:2px;}
+.v1 .pm-arrow{font-size:18px;color:#ccc;}
+.v1 .pm-divider{height:1px;background:#f5f5f5;margin:0 18px;}
+
+/* Bottom nav shared */
+.bnav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #f0f0f0;display:flex;justify-content:space-around;align-items:flex-start;z-index:50;}
+.bnav.h76{height:76px;padding-top:8px;}
+.bnav.h82{height:82px;padding-top:10px;}
+.nt{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;position:relative;}
+.nt svg{width:24px;height:24px;color:#bbb;stroke-width:1.8;transition:color 0.2s;}
+.nt span{font-size:10px;font-weight:500;color:#bbb;transition:color 0.2s;}
+.nt.on svg{color:#1a1a1a;}
+.nt.on span{color:#1a1a1a;font-weight:600;}
+.nt-badge{position:absolute;top:-3px;right:0;min-width:16px;height:16px;border-radius:8px;background:#4285f4;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+
+/* ═══════════════════════════════════════════ */
+/* V2 STYLES */
+/* ═══════════════════════════════════════════ */
+.v2 .topbar{display:flex;align-items:center;gap:10px;padding:10px 20px 8px;}
+.v2 .topbar-avatar{width:44px;height:44px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;}
+.v2 .topbar-badge{display:flex;align-items:center;gap:4px;padding:6px 12px;border-radius:14px;background:#f5f5f5;font-size:13px;font-weight:600;color:#1a1a1a;cursor:pointer;}
+.v2 .topbar-spacer{flex:1;}
+.v2 .topbar-icon{width:44px;height:44px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0;}
+.v2 .topbar-icon svg{width:20px;height:20px;stroke:#1a1a1a;fill:none;stroke-width:2;}
+.v2 .badge-dot{position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:#4285f4;border:2px solid #fff;}
+.v2 .balance-block{padding:12px 20px 4px;}
+.v2 .balance-row{display:flex;align-items:center;gap:8px;}
+.v2 .balance-num{font-size:32px;font-weight:700;color:#1a1a1a;letter-spacing:-0.5px;}
+.v2 .balance-cur{font-size:32px;font-weight:700;color:#1a1a1a;}
+.v2 .balance-eye{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ccc;font-size:16px;}
+.v2 .balance-link{font-size:14px;color:#1a1a1a;font-weight:500;margin-top:6px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;}
+.v2 .balance-link::after{content:'›';font-size:16px;}
+.v2 .action-row{display:flex;gap:8px;padding:16px 20px 12px;}
+.v2 .action-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;}
+.v2 .action-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.v2 .action-icon.dark{background:#1a1a1a;}
+.v2 .action-icon.yellow{background:#ffd800;}
+.v2 .action-icon.grey{background:#f2f2f2;}
+.v2 .action-label{font-size:12px;font-weight:500;color:#1a1a1a;text-align:center;line-height:1.3;}
+.v2 .promo-scroll{display:flex;gap:8px;padding:4px 20px 16px;overflow-x:auto;scrollbar-width:none;}
+.v2 .promo-scroll::-webkit-scrollbar{display:none}
+.v2 .promo-card{min-width:140px;height:96px;border-radius:20px;padding:14px;display:flex;flex-direction:column;justify-content:flex-end;font-size:13px;font-weight:600;line-height:1.3;cursor:pointer;flex-shrink:0;position:relative;overflow:hidden;}
+.v2 .promo-card .promo-emoji{position:absolute;top:10px;right:10px;font-size:28px;opacity:0.7;}
+.v2 .product-card{margin:0 20px 0;padding:16px;background:#fff;border-radius:20px;}
+.v2 .prod-row{display:flex;align-items:center;gap:12px;}
+.v2 .prod-icon{width:40px;height:40px;border-radius:12px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.v2 .prod-info{flex:1;}
+.v2 .prod-amount{font-size:17px;font-weight:700;color:#1a1a1a;}
+.v2 .prod-label{font-size:13px;color:#888;margin-top:1px;}
+.v2 .prod-cashback{font-size:13px;font-weight:600;color:#1a1a1a;display:flex;align-items:center;gap:4px;}
+.v2 .card-thumbs{display:flex;gap:6px;margin-top:10px;}
+.v2 .card-thumb{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;}
+.v2 .ai-badge{display:inline-flex;align-items:center;gap:4px;background:#fff9cc;border:1px solid #ffd800;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#a07d00;}
+.v2 .ai-dot{width:6px;height:6px;border-radius:50%;background:#ffd800;animation:pl 1.5s ease-in-out infinite;}
+.v2 .sect-hdr{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 12px;}
+.v2 .sect-title{font-size:20px;font-weight:700;color:#1a1a1a;}
+.v2 .sect-link{font-size:14px;font-weight:500;color:#1a1a1a;background:#f2f2f2;border-radius:10px;padding:6px 14px;border:none;cursor:pointer;font-family:inherit;}
+.v2 .btn-outline{width:100%;height:50px;border-radius:14px;border:1.5px solid #e0e0e0;background:#fff;font-size:15px;font-weight:600;color:#1a1a1a;cursor:pointer;font-family:inherit;margin-bottom:8px;}
+.v2 .btn-yellow{width:100%;height:50px;border-radius:14px;border:none;background:#ffd800;font-size:15px;font-weight:700;color:#1a1a1a;cursor:pointer;font-family:inherit;}
+.v2 .cta-area{padding:12px 20px 16px;}
+.v2 .grey-band{background:#f5f5f5;height:8px;}
+.v2 .date-label{font-size:14px;font-weight:500;color:#888;padding:16px 20px 8px;}
+.v2 .tx-item{display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:pointer;}
+.v2 .tx-logo{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:#f5f5f5;}
+.v2 .tx-info{flex:1;min-width:0;}
+.v2 .tx-name{font-size:15px;font-weight:500;color:#1a1a1a;}
+.v2 .tx-right{text-align:right;flex-shrink:0;}
+.v2 .tx-sum{font-size:15px;font-weight:600;color:#1a1a1a;}
+.v2 .tx-cb{font-size:12px;color:#34a853;margin-top:2px;font-weight:500;}
+.v2 .hist-filters{display:flex;gap:6px;padding:8px 20px 4px;overflow-x:auto;scrollbar-width:none;}
+.v2 .hist-filters::-webkit-scrollbar{display:none}
+.v2 .hf{padding:8px 16px;border-radius:12px;font-size:14px;font-weight:500;background:#f5f5f5;color:#1a1a1a;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.v2 .hf.on{background:#1a1a1a;color:#fff;}
+.v2 .hist-topbar{display:flex;align-items:center;gap:8px;padding:10px 20px 8px;}
+.v2 .hist-month{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:600;color:#1a1a1a;flex:1;}
+.v2 .hist-month .arrow{width:32px;height:32px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#888;}
+.v2 .hist-summary{display:flex;gap:20px;padding:16px 20px 8px;}
+.v2 .hs-col{flex:1;}
+.v2 .hs-label{font-size:13px;color:#888;margin-bottom:4px;}
+.v2 .hs-val{font-size:18px;font-weight:700;color:#1a1a1a;}
+.v2 .hs-bar{display:flex;gap:2px;margin-top:8px;height:4px;border-radius:2px;overflow:hidden;}
+.v2 .hs-bar-seg{height:100%;border-radius:2px;}
+.v2 .inline-promo{margin:8px 20px;padding:16px 18px;border-radius:20px;display:flex;align-items:center;gap:12px;cursor:pointer;position:relative;}
+.v2 .ip-text{flex:1;}
+.v2 .ip-title{font-size:14px;font-weight:600;color:#1a1a1a;line-height:1.3;}
+.v2 .ip-sub{font-size:12px;color:#888;margin-top:3px;}
+.v2 .ip-close{position:absolute;top:10px;right:12px;font-size:16px;color:rgba(0,0,0,0.2);cursor:pointer;}
+.v2 .ip-emoji{font-size:32px;flex-shrink:0;}
+.v2 .chat-header{display:flex;align-items:center;gap:10px;padding:10px 20px 8px;}
+.v2 .chat-ava{width:40px;height:40px;border-radius:14px;background:#ffd800;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.v2 .chat-hdr-text{flex:1;}
+.v2 .chat-hdr-name{font-size:16px;font-weight:600;color:#1a1a1a;}
+.v2 .chat-hdr-sub{font-size:12px;color:#888;}
+.v2 .chat-body{padding:0 20px;}
+.v2 .chat-date{text-align:center;font-size:12px;color:#bbb;margin:14px 0;}
+.v2 .msg{display:flex;gap:8px;margin-bottom:10px;}
+.v2 .msg.bot{justify-content:flex-start;}
+.v2 .msg.usr{justify-content:flex-end;}
+.v2 .msg-ava{width:30px;height:30px;border-radius:10px;background:#ffd800;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:2px;}
+.v2 .bbl{max-width:78%;padding:12px 16px;font-size:14px;line-height:1.45;border-radius:20px;}
+.v2 .msg.bot .bbl{background:#f5f5f5;color:#1a1a1a;border-bottom-left-radius:6px;}
+.v2 .msg.usr .bbl{background:#ffd800;color:#1a1a1a;border-bottom-right-radius:6px;}
+.v2 .bbl b{font-weight:600;}
+.v2 .bbl .hl{color:#a07d00;font-weight:600;}
+.v2 .msg-time{font-size:10px;color:#ccc;margin-top:3px;padding:0 4px;}
+.v2 .chat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.v2 .cc{padding:8px 14px;border-radius:14px;font-size:13px;font-weight:500;background:#fff;color:#1a1a1a;border:1.5px solid #e8e8e8;cursor:pointer;font-family:inherit;}
+.v2 .cc.accent{background:#fff9cc;border-color:#ffd800;color:#a07d00;font-weight:600;}
+.v2 .ci-row{display:flex;gap:8px;padding:8px 20px;}
+.v2 .ci-input{flex:1;height:48px;border:none;background:#f5f5f5;border-radius:16px;padding:0 16px;font-size:15px;font-family:inherit;color:#1a1a1a;outline:none;}
+.v2 .ci-input::placeholder{color:#bbb;}
+.v2 .ci-mic{width:48px;height:48px;border-radius:14px;background:#ffd800;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.v2 .more-title{font-size:28px;font-weight:700;color:#1a1a1a;padding:10px 20px;}
+.v2 .big-promo{margin:4px 20px 12px;padding:22px 20px;border-radius:24px;position:relative;overflow:hidden;cursor:pointer;min-height:140px;}
+.v2 .big-promo-title{font-size:22px;font-weight:700;color:#1a1a1a;line-height:1.3;max-width:60%;}
+.v2 .big-promo-sub{font-size:13px;color:#555;margin-top:6px;max-width:55%;}
+.v2 .big-promo-emojis{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:36px;display:flex;flex-wrap:wrap;gap:4px;width:100px;justify-content:center;opacity:0.8;}
+.v2 .fav-grid{display:flex;gap:12px;padding:8px 20px 12px;overflow-x:auto;scrollbar-width:none;}
+.v2 .fav-grid::-webkit-scrollbar{display:none}
+.v2 .fav-item{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:72px;cursor:pointer;}
+.v2 .fav-icon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.v2 .fav-label{font-size:12px;color:#1a1a1a;font-weight:500;text-align:center;max-width:72px;line-height:1.3;}
+.v2 .contact-ava{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;}
+.v2 .contacts-row{display:flex;gap:16px;padding:8px 20px 12px;}
+.v2 .contact-item{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;}
+.v2 .contact-name{font-size:12px;color:#1a1a1a;font-weight:500;text-align:center;max-width:64px;line-height:1.3;}
+.v2 .transfer-row{display:flex;align-items:center;background:#f5f5f5;border-radius:18px;padding:0 4px 0 16px;height:52px;margin:12px 20px 16px;}
+.v2 .transfer-logo{font-size:18px;margin-right:10px;}
+.v2 .transfer-input{flex:1;border:none;background:transparent;font-size:15px;font-family:inherit;color:#1a1a1a;outline:none;}
+.v2 .transfer-input::placeholder{color:#bbb;}
+.v2 .transfer-cam{width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0;}
+
+/* ═══════════════════════════════════════════ */
+/* V3 STYLES */
+/* ═══════════════════════════════════════════ */
+.v3 .pad{padding:0 20px;}
+.v3 .card{background:#fff;border-radius:20px;padding:18px;margin:0 20px 10px;}
+.v3 .ai-b{display:inline-flex;align-items:center;gap:4px;background:#fff9cc;border:1px solid #ffd800;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#a07d00;}
+.v3 .ai-d{width:6px;height:6px;border-radius:50%;background:#ffd800;animation:pl 1.5s ease-in-out infinite;}
+.v3 .status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;}
+.v3 .status-pill.ok{background:#e8f5e9;color:#2e7d32;}
+.v3 .topbar2{display:flex;align-items:center;gap:10px;padding:10px 20px 6px;}
+.v3 .tb-ava{width:44px;height:44px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;}
+.v3 .tb-sp{flex:1;}
+.v3 .tb-ic{width:40px;height:40px;border-radius:50%;background:#f5f5f5;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px;}
+.v3 .action-card{margin:0 20px 10px;padding:18px;border-radius:20px;border:1.5px solid #f0f0f0;position:relative;overflow:hidden;cursor:pointer;}
+.v3 .action-card:active{background:#fafafa;}
+.v3 .ac-highlight{border-color:#ffd800;background:#fffef5;}
+.v3 .ac-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.v3 .ac-label{font-size:12px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.04em;}
+.v3 .ac-title{font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:4px;}
+.v3 .ac-sub{font-size:13px;color:#888;line-height:1.4;}
+.v3 .ac-actions{display:flex;gap:8px;margin-top:14px;}
+.v3 .ac-btn-primary{flex:1;height:44px;border-radius:12px;border:none;background:#ffd800;font-size:14px;font-weight:700;color:#1a1a1a;cursor:pointer;font-family:inherit;}
+.v3 .ac-btn-secondary{flex:1;height:44px;border-radius:12px;border:1.5px solid #e0e0e0;background:#fff;font-size:14px;font-weight:600;color:#1a1a1a;cursor:pointer;font-family:inherit;}
+.v3 .pay-hero{margin:0 20px 10px;padding:24px 20px;border-radius:24px;background:#1a1a1a;position:relative;overflow:hidden;}
+.v3 .pay-hero::before{content:'';position:absolute;top:-30px;right:-20px;width:120px;height:120px;background:radial-gradient(circle,rgba(255,216,0,0.15),transparent 70%);}
+.v3 .ph-tag{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px;}
+.v3 .ph-amount{font-size:36px;font-weight:700;color:#fff;margin-bottom:4px;}
+.v3 .ph-amount span{color:#ffd800;}
+.v3 .ph-sub{font-size:13px;color:rgba(255,255,255,0.4);}
+.v3 .dist-item{display:flex;align-items:center;gap:12px;padding:14px 0;}
+.v3 .dist-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.v3 .dist-info{flex:1;}
+.v3 .dist-name{font-size:15px;font-weight:500;color:#1a1a1a;}
+.v3 .dist-desc{font-size:12px;color:#888;margin-top:1px;}
+.v3 .dist-val{font-size:15px;font-weight:600;color:#1a1a1a;}
+.v3 .dist-val.green{color:#34a853;}
+.v3 .dist-divider{height:1px;background:#f5f5f5;}
+.v3 .geo-banner{margin:0 20px 10px;padding:16px 18px;border-radius:20px;display:flex;align-items:center;gap:12px;}
+.v3 .geo-icon{font-size:28px;flex-shrink:0;}
+.v3 .geo-text{flex:1;}
+.v3 .geo-title{font-size:14px;font-weight:600;color:#1a1a1a;}
+.v3 .geo-sub{font-size:12px;color:#888;margin-top:2px;}
+.v3 .geo-action{font-size:13px;font-weight:600;color:#2e7d32;flex-shrink:0;cursor:pointer;}
+.v3 .eve-summary{margin:0 20px 10px;padding:18px;border-radius:20px;background:#f5f5f5;}
+.v3 .eve-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;}
+.v3 .eve-label{font-size:14px;color:#888;}
+.v3 .eve-val{font-size:15px;font-weight:600;color:#1a1a1a;}
+.v3 .eve-val.red{color:#e53935;}
+.v3 .eve-val.green{color:#34a853;}
+.v3 .month-hero{margin:0 20px 10px;padding:24px 20px;border-radius:24px;background:linear-gradient(135deg,#1a1a1a,#2a2a2a);position:relative;overflow:hidden;}
+.v3 .month-hero::before{content:'';position:absolute;top:-30px;right:-20px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,216,0,0.1),transparent 70%);}
+.v3 .mh-title{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;}
+.v3 .mh-stat{display:flex;gap:16px;margin-bottom:4px;}
+.v3 .mh-stat-item{flex:1;}
+.v3 .mh-stat-val{font-size:22px;font-weight:700;color:#fff;}
+.v3 .mh-stat-val span{color:#ffd800;}
+.v3 .mh-stat-label{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;}
+.v3 .mh-decisions{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);font-size:14px;color:rgba(255,255,255,0.7);}
+.v3 .mh-decisions b{color:#ffd800;font-weight:700;}
+.v3 .achievement{display:flex;align-items:center;gap:12px;padding:12px 0;}
+.v3 .ach-icon{width:40px;height:40px;border-radius:12px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.v3 .ach-info{flex:1;}
+.v3 .ach-name{font-size:14px;font-weight:500;color:#1a1a1a;}
+.v3 .ach-detail{font-size:12px;color:#888;margin-top:1px;}
+.v3 .ach-badge{font-size:12px;font-weight:600;color:#2e7d32;background:#e8f5e9;padding:3px 8px;border-radius:6px;flex-shrink:0;}
+.v3 .tx{display:flex;align-items:center;gap:12px;padding:11px 0;cursor:pointer;}
+.v3 .tx-i{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.v3 .tx-m{flex:1;min-width:0;}
+.v3 .tx-n{font-size:15px;font-weight:500;color:#1a1a1a;}
+.v3 .tx-d{font-size:12px;color:#888;margin-top:1px;}
+.v3 .tx-r{text-align:right;flex-shrink:0;}
+.v3 .tx-a{font-size:15px;font-weight:600;color:#1a1a1a;}
+.v3 .tx-a.g{color:#34a853;}
+.v3 .tx-cb{font-size:11px;color:#34a853;margin-top:1px;font-weight:500;}
+.v3 .tx-div{height:1px;background:#f5f5f5;}
+.v3 .ftx{opacity:0.6;border-left:3px solid #ffd800;padding-left:9px;}
+.v3 .ftx .tx-n{font-style:italic;}
+.v3 .bottom-bar{position:absolute;bottom:0;left:0;right:0;height:82px;background:#fff;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center;padding:0 20px 20px;z-index:50;gap:8px;}
+.v3 .bb-input{flex:1;height:48px;border:none;background:#f5f5f5;border-radius:16px;padding:0 16px;font-size:15px;font-family:inherit;color:#1a1a1a;outline:none;}
+.v3 .bb-input::placeholder{color:#bbb;}
+.v3 .bb-mic{width:48px;height:48px;border-radius:14px;background:#ffd800;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.v3 .btn-y{width:100%;height:50px;border-radius:14px;border:none;background:#ffd800;font-size:15px;font-weight:700;color:#1a1a1a;cursor:pointer;font-family:inherit;}
+.v3 .btn-o{width:100%;height:50px;border-radius:14px;border:1.5px solid #e0e0e0;background:#fff;font-size:15px;font-weight:600;color:#1a1a1a;cursor:pointer;font-family:inherit;}
+
+@keyframes pl{0%,100%{opacity:1}50%{opacity:0.4}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Мобильный банк</h1>
+  <p>Три версии одного приложения: от текущего дизайна до радикального контекстного интерфейса</p>
+</div>
+
+<div class="ver-tabs">
+  <button class="ver-tab on" onclick="switchVer(0)">1. Текущий</button>
+  <button class="ver-tab" onclick="switchVer(1)">2. Будущее</button>
+  <button class="ver-tab" onclick="switchVer(2)">3. Банк 2030</button>
+</div>
+
+<div class="ver-desc" id="ver-desc">Классический банковский интерфейс с 4 экранами и стандартной навигацией</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- VERSION 1: ТЕКУЩИЙ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="version v1 on" id="v1">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="sbar"><span class="clk">21:42</span><div class="sbar-r"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 00-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg><svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg></div></div>
+
+  <div class="wrap h1">
+    <!-- HOME -->
+    <div class="scr on" id="v1-home">
+      <div class="balance-section">
+        <div class="balance-label">Общий баланс</div>
+        <div class="balance-row"><span class="balance-amount">847 293</span><span class="balance-currency">₽</span></div>
+        <div class="balance-accounts">
+          <div class="account-pill"><div class="account-pill-label">Основной</div><div class="account-pill-amount">612 480 ₽</div></div>
+          <div class="account-pill"><div class="account-pill-label">Накопительный</div><div class="account-pill-amount">234 813 ₽</div></div>
+        </div>
+      </div>
+      <div class="quick-actions">
+        <div class="action-tile" onclick="v1go('payments')"><div class="action-tile-icon yellow">💸</div><span class="action-tile-label">Перевод</span></div>
+        <div class="action-tile" onclick="v1go('payments')"><div class="action-tile-icon light-purple">💳</div><span class="action-tile-label">Оплатить</span></div>
+        <div class="action-tile"><div class="action-tile-icon light-blue">📥</div><span class="action-tile-label">Пополнить</span></div>
+        <div class="action-tile"><div class="action-tile-icon light-green">📊</div><span class="action-tile-label">Аналитика</span></div>
+      </div>
+      <div class="promo-banner" style="background:#fff8d6;"><div class="promo-icon" style="background:rgba(255,216,0,0.3);">⭐</div><div class="promo-text"><div class="promo-title">Кэшбэк 5% на рестораны</div><div class="promo-sub">Подключите до конца марта</div></div><div class="promo-dismiss">×</div></div>
+      <div class="section-hdr"><span class="section-hdr-title">Последние операции</span><span class="section-hdr-link" onclick="v1go('history')">Все</span></div>
+      <div class="tx-card">
+        <div class="tx-item"><div class="tx-icon" style="background:#fff3e0;">🍕</div><div class="tx-info"><div class="tx-name">Яндекс Еда</div><div class="tx-detail">Доставка еды</div></div><div class="tx-right"><div class="tx-sum">−1 290 ₽</div><div class="tx-time">14:32</div></div></div>
+        <div class="tx-divider"></div>
+        <div class="tx-item"><div class="tx-icon" style="background:#e8f5e9;">💰</div><div class="tx-info"><div class="tx-name">Зачисление зарплаты</div><div class="tx-detail">ООО «Технологии»</div></div><div class="tx-right"><div class="tx-sum income">+185 000 ₽</div><div class="tx-time">10:00</div></div></div>
+        <div class="tx-divider"></div>
+        <div class="tx-item"><div class="tx-icon" style="background:#fce4ec;">🛍</div><div class="tx-info"><div class="tx-name">Wildberries</div><div class="tx-detail">Покупки</div></div><div class="tx-right"><div class="tx-sum">−4 870 ₽</div><div class="tx-time">Вчера</div></div></div>
+        <div class="tx-divider"></div>
+        <div class="tx-item"><div class="tx-icon" style="background:#f3e5f5;">🎵</div><div class="tx-info"><div class="tx-name">Яндекс Плюс</div><div class="tx-detail">Подписка</div></div><div class="tx-right"><div class="tx-sum">−299 ₽</div><div class="tx-time">Вчера</div></div></div>
+      </div>
+      <div class="promo-banner" style="background:#eef6ff;margin-bottom:20px;"><div class="promo-icon" style="background:rgba(66,133,244,0.15);">🏦</div><div class="promo-text"><div class="promo-title">Вклад «Выгодный»</div><div class="promo-sub">До 18% годовых · Открыть →</div></div></div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="scr" id="v1-payments">
+      <div class="screen-title">Платежи</div>
+      <div class="section-hdr"><span class="section-hdr-title">Избранные</span></div>
+      <div class="fav-row">
+        <div class="fav-item"><div class="fav-avatar" style="background:#5c6bc0;">ОМ</div><div class="fav-name">Ольга</div></div>
+        <div class="fav-item"><div class="fav-avatar" style="background:#ef5350;">АК</div><div class="fav-name">Анна</div></div>
+        <div class="fav-item"><div class="fav-avatar" style="background:#66bb6a;">ДС</div><div class="fav-name">Дмитрий</div></div>
+        <div class="fav-item"><div class="fav-avatar" style="background:#ffa726;">МП</div><div class="fav-name">Мария</div></div>
+        <div class="fav-item"><div class="fav-avatar" style="background:#f0f0f0;color:#888;font-size:24px;font-weight:300;">+</div><div class="fav-name">Добавить</div></div>
+      </div>
+      <div class="transfer-section" style="margin-top:12px;">
+        <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:12px;">Перевод по номеру</div>
+        <div class="transfer-input-row"><input class="transfer-input" placeholder="Номер телефона или карта"><button class="transfer-btn">Далее</button></div>
+      </div>
+      <div class="promo-banner" style="background:#f0e6ff;"><div class="promo-icon" style="background:rgba(156,39,176,0.15);">🎯</div><div class="promo-text"><div class="promo-title">Переводы без комиссии</div><div class="promo-sub">Через СБП до 100 000 ₽ в месяц</div></div></div>
+      <div class="section-hdr"><span class="section-hdr-title">Категории</span></div>
+      <div class="category-grid">
+        <div class="cat-tile"><div class="cat-tile-icon" style="background:#fff3e0;">📱</div><div class="cat-tile-label">Связь</div></div>
+        <div class="cat-tile"><div class="cat-tile-icon" style="background:#e3f2fd;">🏠</div><div class="cat-tile-label">ЖКХ</div></div>
+        <div class="cat-tile"><div class="cat-tile-icon" style="background:#e8f5e9;">🌐</div><div class="cat-tile-label">Интернет</div></div>
+        <div class="cat-tile"><div class="cat-tile-icon" style="background:#fce4ec;">🎮</div><div class="cat-tile-label">Игры</div></div>
+        <div class="cat-tile"><div class="cat-tile-icon" style="background:#f3e5f5;">🚌</div><div class="cat-tile-label">Транспорт</div></div>
+        <div class="cat-tile"><div class="cat-tile-icon" style="background:#e0f7fa;">📺</div><div class="cat-tile-label">ТВ</div></div>
+        <div class="cat-tile"><div class="cat-tile-icon" style="background:#fff8e1;">⚡</div><div class="cat-tile-label">Штрафы</div></div>
+        <div class="cat-tile"><div class="cat-tile-icon" style="background:#f5f5f5;">⋯</div><div class="cat-tile-label">Ещё</div></div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="scr" id="v1-history">
+      <div class="screen-title">История</div>
+      <div class="history-summary">
+        <div class="summary-pill"><div class="summary-pill-label">Расходы</div><div class="summary-pill-val red">−78 420 ₽</div></div>
+        <div class="summary-pill"><div class="summary-pill-label">Доходы</div><div class="summary-pill-val green">+215 000 ₽</div></div>
+      </div>
+      <div class="history-filters"><button class="h-filter active">Все</button><button class="h-filter">Покупки</button><button class="h-filter">Переводы</button><button class="h-filter">Еда</button></div>
+      <div class="day-label">Сегодня, 16 марта</div>
+      <div class="tx-card">
+        <div class="tx-item"><div class="tx-icon" style="background:#fff3e0;">🍕</div><div class="tx-info"><div class="tx-name">Яндекс Еда</div><div class="tx-detail">Доставка</div></div><div class="tx-right"><div class="tx-sum">−1 290 ₽</div><div class="tx-time">14:32</div></div></div>
+        <div class="tx-divider"></div>
+        <div class="tx-item"><div class="tx-icon" style="background:#e8f5e9;">💰</div><div class="tx-info"><div class="tx-name">Зарплата</div><div class="tx-detail">ООО «Технологии»</div></div><div class="tx-right"><div class="tx-sum income">+185 000 ₽</div><div class="tx-time">10:00</div></div></div>
+      </div>
+      <div class="day-label">Вчера, 15 марта</div>
+      <div class="tx-card">
+        <div class="tx-item"><div class="tx-icon" style="background:#fce4ec;">🛍</div><div class="tx-info"><div class="tx-name">Wildberries</div></div><div class="tx-right"><div class="tx-sum">−4 870 ₽</div><div class="tx-time">18:42</div></div></div>
+        <div class="tx-divider"></div>
+        <div class="tx-item"><div class="tx-icon" style="background:#f3e5f5;">🎵</div><div class="tx-info"><div class="tx-name">Яндекс Плюс</div></div><div class="tx-right"><div class="tx-sum">−299 ₽</div><div class="tx-time">12:00</div></div></div>
+        <div class="tx-divider"></div>
+        <div class="tx-item"><div class="tx-icon" style="background:#e3f2fd;">🚕</div><div class="tx-info"><div class="tx-name">Яндекс Такси</div></div><div class="tx-right"><div class="tx-sum">−640 ₽</div><div class="tx-time">08:20</div></div></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="scr" id="v1-profile">
+      <div class="profile-hero"><div class="p-avatar">АМ</div><div class="p-name">Алексей М.</div><div class="p-sub">Премиум · с 2019 года</div></div>
+      <div class="profile-actions">
+        <div class="p-action"><div class="p-action-icon">👤</div><span class="p-action-label">Данные</span></div>
+        <div class="p-action"><div class="p-action-icon">🔒</div><span class="p-action-label">Безопасность</span></div>
+        <div class="p-action"><div class="p-action-icon">🎁</div><span class="p-action-label">Бонусы</span></div>
+      </div>
+      <div class="pm-card">
+        <div class="pm-item"><div class="pm-icon">🏦</div><div class="pm-text"><div class="pm-title">Счета и вклады</div><div class="pm-sub">3 счёта, 1 вклад</div></div><div class="pm-arrow">›</div></div>
+        <div class="pm-divider"></div>
+        <div class="pm-item"><div class="pm-icon">💳</div><div class="pm-text"><div class="pm-title">Мои карты</div><div class="pm-sub">Visa •••• 8947</div></div><div class="pm-arrow">›</div></div>
+        <div class="pm-divider"></div>
+        <div class="pm-item"><div class="pm-icon">📊</div><div class="pm-text"><div class="pm-title">Аналитика расходов</div></div><div class="pm-arrow">›</div></div>
+        <div class="pm-divider"></div>
+        <div class="pm-item"><div class="pm-icon">⚙️</div><div class="pm-text"><div class="pm-title">Настройки</div></div><div class="pm-arrow">›</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bnav h76">
+    <div class="nt on" onclick="v1go('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg><span>Главная</span></div>
+    <div class="nt" onclick="v1go('payments')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>Платежи</span></div>
+    <div class="nt" onclick="v1go('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>История</span></div>
+    <div class="nt" onclick="v1go('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></div>
+    <div class="nt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg><span>Ещё</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- VERSION 2: БУДУЩЕЕ -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="version v2" id="v2">
+<div class="phone wbg">
+  <div class="notch"></div>
+  <div class="sbar"><span class="clk">9:41</span><div class="sbar-r"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 00-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg><svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg></div></div>
+
+  <div class="wrap h2">
+    <!-- HOME -->
+    <div class="scr on" id="v2-home">
+      <div class="topbar"><div class="topbar-avatar">👤</div><div class="topbar-badge"><span style="font-size:12px;">💎</span> Premium</div><div class="topbar-spacer"></div><div class="topbar-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg><div class="badge-dot"></div></div><div class="topbar-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div></div>
+      <div class="balance-block"><div class="balance-row"><span class="balance-num">161 192</span><span class="balance-cur">₽</span><div class="balance-eye">👁</div></div><div class="balance-link">Все накопления</div></div>
+      <div class="action-row">
+        <div class="action-item"><div class="action-icon dark" style="font-size:20px;">⬜</div><div class="action-label">Оплата<br>по QR</div></div>
+        <div class="action-item" onclick="v2go('pay')"><div class="action-icon yellow">📲</div><div class="action-label">По номеру<br>телефона</div></div>
+        <div class="action-item"><div class="action-icon grey">⇄</div><div class="action-label">Между<br>счетами</div></div>
+        <div class="action-item"><div class="action-icon grey">＋</div><div class="action-label">Из другого<br>банка</div></div>
+      </div>
+      <div class="promo-scroll">
+        <div class="promo-card" style="background:#e8def8;"><div class="promo-emoji">✨</div>AI-прогноз расходов</div>
+        <div class="promo-card" style="background:#ffe0b2;"><div class="promo-emoji">🎯</div>Умные цели</div>
+        <div class="promo-card" style="background:#c8e6c9;"><div class="promo-emoji">🌱</div>Углеродный след</div>
+      </div>
+      <div style="padding:0 20px 8px;"><div style="background:#1a1a1a;border-radius:20px;padding:16px 18px;position:relative;overflow:hidden;"><div style="position:absolute;top:-20px;right:-10px;width:100px;height:100px;background:radial-gradient(circle,rgba(255,216,0,0.12),transparent 70%);"></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-size:12px;color:rgba(255,255,255,0.5);">Прогноз AI до конца месяца</span><div class="ai-badge"><div class="ai-dot"></div> AI</div></div><div style="font-size:24px;font-weight:700;color:#fff;margin-bottom:4px;">+42 300 <span style="color:#ffd800;">₽</span></div><div style="height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;"><div style="height:100%;width:68%;background:linear-gradient(90deg,#ffd800,#ffeb80);border-radius:2px;"></div></div></div></div>
+      <div class="product-card"><div class="prod-row"><div class="prod-icon">💳</div><div class="prod-info"><div class="prod-amount">5 000 ₽</div><div class="prod-label">Текущий счёт *4511</div></div><div class="prod-cashback"><span style="font-size:14px;">✦</span> 1 024 ₽</div></div><div class="card-thumbs"><div class="card-thumb" style="background:#e8f5e9;color:#2e7d32;">4808 МИР</div><div class="card-thumb" style="background:#e3f2fd;color:#1565c0;">0809 МИР</div></div></div>
+      <div style="padding:12px 20px 0;"><div style="background:#fff9cc;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;"><div style="font-size:22px;">💡</div><div style="flex:1;"><div style="font-size:13px;font-weight:600;color:#1a1a1a;">Подписка VK Музыка не используется 45 дней</div><div style="font-size:12px;color:#888;margin-top:2px;">Сэкономьте 199 ₽/мес</div></div><div style="font-size:13px;font-weight:600;color:#a07d00;">Отменить</div></div></div>
+      <div class="cta-area"><button class="btn-outline">Все продукты</button><button class="btn-yellow">Открыть новый продукт</button></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="scr" id="v2-hist">
+      <div class="hist-topbar"><div class="hist-month"><div class="arrow">‹</div><span>📅 Март</span><div class="arrow">›</div></div></div>
+      <div class="hist-filters"><button class="hf on">Расходы</button><button class="hf">Доходы</button><button class="hf">Счета</button></div>
+      <div class="hist-summary"><div class="hs-col"><div class="hs-label">Потратили</div><div class="hs-val">78 420 ₽</div><div class="hs-bar"><div class="hs-bar-seg" style="flex:4;background:#ff9800;"></div><div class="hs-bar-seg" style="flex:3;background:#e91e63;"></div><div class="hs-bar-seg" style="flex:2;background:#2196f3;"></div></div></div><div class="hs-col"><div class="hs-label">Получили</div><div class="hs-val">215 000 ₽</div><div class="hs-bar"><div class="hs-bar-seg" style="flex:7;background:#4285f4;"></div><div class="hs-bar-seg" style="flex:3;background:#34a853;"></div></div></div></div>
+      <div class="date-label">16 марта</div>
+      <div class="tx-item"><div class="tx-logo" style="background:#fff3e0;">🍕</div><div class="tx-info"><div class="tx-name">Яндекс Еда</div></div><div class="tx-right"><div class="tx-sum">− 1 290 ₽</div><div class="tx-cb">+ 64,5 ₽</div></div></div>
+      <div class="tx-item"><div class="tx-logo" style="background:#e8f5e9;">💰</div><div class="tx-info"><div class="tx-name">Зарплата</div></div><div class="tx-right"><div class="tx-sum" style="color:#34a853;">+ 185 000 ₽</div></div></div>
+      <div class="inline-promo" style="background:#e3f2fd;"><div class="ip-emoji">📈</div><div class="ip-text"><div class="ip-title">AI-прогноз: к концу месяца ≈124 000 ₽</div><div class="ip-sub">На 8% меньше февраля</div></div><div class="ip-close">×</div></div>
+      <div class="date-label">15 марта</div>
+      <div class="tx-item"><div class="tx-logo" style="background:#fce4ec;">🛍</div><div class="tx-info"><div class="tx-name">Wildberries</div></div><div class="tx-right"><div class="tx-sum">− 4 870 ₽</div><div class="tx-cb">+ 243 ₽</div></div></div>
+      <div class="tx-item"><div class="tx-logo" style="background:#f3e5f5;">🎵</div><div class="tx-info"><div class="tx-name">Яндекс Плюс</div></div><div class="tx-right"><div class="tx-sum">− 299 ₽</div></div></div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="scr" id="v2-pay">
+      <div class="sect-hdr"><span class="sect-title">Избранное</span><button class="sect-link">Ещe</button></div>
+      <div class="fav-grid">
+        <div class="fav-item"><div class="fav-icon" style="background:#1a1a1a;color:#fff;font-size:18px;">📋</div><div class="fav-label">Счета</div></div>
+        <div class="fav-item"><div class="fav-icon" style="background:#e53935;font-size:26px;">🔴</div><div class="fav-label">МТС</div></div>
+        <div class="fav-item"><div class="fav-icon" style="background:#e3f2fd;font-size:26px;">✂️</div><div class="fav-label">Интернет</div></div>
+        <div class="fav-item"><div class="fav-icon" style="background:#f5f5f5;font-size:18px;font-weight:700;color:#888;">М</div><div class="fav-label">Мосэнерго</div></div>
+      </div>
+      <div class="grey-band"></div>
+      <div class="transfer-row"><div class="transfer-logo">📲</div><input class="transfer-input" placeholder="Перевести по телефону"><div class="transfer-cam">📷</div></div>
+      <div class="contacts-row">
+        <div class="contact-item"><div class="contact-ava" style="background:#ffd800;color:#1a1a1a;">♥</div><div class="contact-name">Себе</div></div>
+        <div class="contact-item"><div class="contact-ava" style="background:#5c6bc0;">ОМ</div><div class="contact-name">Ольга М.</div></div>
+        <div class="contact-item"><div class="contact-ava" style="background:#ef5350;">АК</div><div class="contact-name">Анна К.</div></div>
+        <div class="contact-item"><div class="contact-ava" style="background:#f5f5f5;color:#888;">👤</div><div class="contact-name">Другому</div></div>
+      </div>
+      <div class="inline-promo" style="background:#ffe8d6;"><div class="ip-text"><div class="ip-title">Переводы СБП без комиссии</div><div class="ip-sub">До конца года</div></div><div class="ip-emoji">💸</div></div>
+      <div style="padding:0 20px 12px;"><div style="background:#fff9cc;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;"><div class="ai-badge"><div class="ai-dot"></div> AI</div><div style="flex:1;font-size:13px;color:#1a1a1a;font-weight:500;">Автоплатёж ЖКХ — создать?</div><div style="font-size:13px;font-weight:600;color:#a07d00;cursor:pointer;">Да</div></div></div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="scr" id="v2-chat">
+      <div class="chat-header"><div class="chat-ava">✦</div><div class="chat-hdr-text"><div class="chat-hdr-name">Финансовый ассистент</div><div class="chat-hdr-sub">Знает ваши привычки и цели</div></div><div class="ai-badge"><div class="ai-dot"></div> AI</div></div>
+      <div class="chat-body">
+        <div class="chat-date">Сегодня</div>
+        <div class="msg bot"><div class="msg-ava">✦</div><div><div class="bbl">Расходы на <b>рестораны</b> +<span class="hl">34%</span> за 2 недели. Установить лимит?</div><div class="msg-time">10:02</div></div></div>
+        <div class="msg usr"><div><div class="bbl">Да, лимит 15 000 в месяц</div><div class="msg-time" style="text-align:right;">10:04</div></div></div>
+        <div class="msg bot"><div class="msg-ava">✦</div><div><div class="bbl">Готово! Лимит <b>15 000 ₽/мес</b>. Осталось <span class="hl">8 420 ₽</span>.</div><div class="msg-time">10:04</div></div></div>
+        <div class="msg bot"><div class="msg-ava">✦</div><div><div class="bbl">Завтра списание <b>Яндекс Плюс 299 ₽</b>. У вас 4 280 баллов — хватит на 3 мес.</div><div class="chat-chips"><button class="cc accent">Оплатить баллами</button><button class="cc">Не сейчас</button></div><div class="msg-time">10:05</div></div></div>
+      </div>
+      <div class="ci-row"><input class="ci-input" placeholder="Спросите что угодно..."><button class="ci-mic">🎙</button></div>
+    </div>
+
+    <!-- MORE -->
+    <div class="scr" id="v2-more">
+      <div class="more-title">Ещe</div>
+      <div class="big-promo" style="background:#d4edda;"><div class="big-promo-title">Кэшбэк и скидки</div><div class="big-promo-sub">Выгодные предложения</div><div class="big-promo-emojis">🛒 🎬 ⛽ 🍕</div></div>
+      <div class="big-promo" style="background:#fff9cc;min-height:120px;"><div class="big-promo-title" style="max-width:65%;">AI-ассистент</div><div class="big-promo-sub" style="max-width:60%;">Прогнозы, автонакопления</div><div class="big-promo-emojis" style="font-size:32px;">🤖 📊 🎯</div></div>
+      <div style="margin:0 20px 12px;background:#f0f9f0;border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:12px;"><div style="font-size:28px;">🌱</div><div style="flex:1;"><div style="font-size:15px;font-weight:600;color:#1a1a1a;">Углеродный след</div><div style="font-size:12px;color:#888;margin-top:2px;">48.3 кг CO₂ · −12%</div></div><div style="font-size:18px;color:#ccc;">›</div></div>
+    </div>
+  </div>
+
+  <div class="bnav h82">
+    <div class="nt on" onclick="v2go('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg><span>Главный</span><div class="nt-badge">1</div></div>
+    <div class="nt" onclick="v2go('hist')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>История</span></div>
+    <div class="nt" onclick="v2go('pay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg><span>Платежи</span></div>
+    <div class="nt" onclick="v2go('chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span>Чат</span></div>
+    <div class="nt" onclick="v2go('more')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg><span>Ещe</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- VERSION 3: БАНК 2030 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="version v3" id="v3">
+<div class="ctx-tabs">
+  <button class="ctx-tab on" onclick="v3show(0)">🌅 Утро</button>
+  <button class="ctx-tab" onclick="v3show(1)">💰 Зарплата</button>
+  <button class="ctx-tab" onclick="v3show(2)">📍 В магазине</button>
+  <button class="ctx-tab" onclick="v3show(3)">🌙 Вечер</button>
+  <button class="ctx-tab" onclick="v3show(4)">📊 Итоги</button>
+</div>
+<div class="phone wbg">
+  <div class="notch"></div>
+  <div class="sbar"><span id="v3clk">8:47</span><div class="sbar-r"><svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 00-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg><svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg></div></div>
+
+  <div class="wrap h3">
+    <!-- MORNING -->
+    <div class="scr on" id="v3-c0">
+      <div class="topbar2"><div class="tb-ava">👤</div><div class="status-pill ok">● Всё в порядке</div><div class="tb-sp"></div><div class="tb-ic">🔔</div></div>
+      <div style="padding:8px 20px 4px;"><div style="font-size:22px;font-weight:700;color:#1a1a1a;">Доброе утро, Алексей</div><div style="font-size:13px;color:#888;margin-top:4px;">Понедельник, 16 марта · Москва</div></div>
+      <div style="padding:12px 20px 8px;"><div style="display:flex;align-items:baseline;gap:4px;"><span style="font-size:32px;font-weight:700;color:#1a1a1a;">161 192</span><span style="font-size:22px;font-weight:600;color:#1a1a1a;">₽</span></div><div style="font-size:13px;color:#888;margin-top:4px;">После платежей сегодня: <b style="color:#1a1a1a;">156 692 ₽</b></div></div>
+      <div style="padding:8px 0 0;"><div style="padding:0 20px 8px;"><div class="ai-b"><div class="ai-d"></div> 3 действия на сегодня</div></div>
+        <div class="action-card ac-highlight"><div class="ac-top"><span class="ac-label">⚡ Автоплатёж</span><span style="font-size:12px;color:#888;">через 2 часа</span></div><div class="ac-title">ЖКХ — 4 200 ₽</div><div class="ac-sub">Счёт сформирован. Оплата в 11:00</div><div class="ac-actions"><button class="ac-btn-primary">Оплатить сейчас</button><button class="ac-btn-secondary">Отложить</button></div></div>
+        <div class="action-card"><div class="ac-top"><span class="ac-label">🔄 Подписка</span><div class="ai-b"><div class="ai-d"></div> AI</div></div><div class="ac-title">HBO Max — 599 ₽/мес</div><div class="ac-sub">Не открывали 62 дня</div><div class="ac-actions"><button class="ac-btn-primary" style="background:#e53935;color:#fff;">Отменить</button><button class="ac-btn-secondary">Оставить</button></div></div>
+        <div class="action-card"><div class="ac-top"><span class="ac-label">🎯 Цель</span><span style="font-size:12px;color:#34a853;font-weight:600;">+5 000 ₽ в пт</span></div><div class="ac-title">Отпуск в Грузию — 72%</div><div style="height:6px;background:#f0f0f0;border-radius:3px;margin:10px 0 6px;overflow:hidden;"><div style="height:100%;width:72%;background:#ffd800;border-radius:3px;"></div></div><div style="display:flex;justify-content:space-between;font-size:13px;"><span style="font-weight:600;">108 000 ₽</span><span style="color:#888;">из 150 000 ₽</span></div></div>
+      </div>
+      <div style="height:90px;"></div>
+      <div class="bottom-bar"><input class="bb-input" placeholder="Переведи, оплати, спроси..."><button class="bb-mic">🎙</button></div>
+    </div>
+
+    <!-- SALARY -->
+    <div class="scr" id="v3-c1">
+      <div class="topbar2"><div class="tb-ava">👤</div><div class="tb-sp"></div><div class="ai-b"><div class="ai-d"></div> Автораспределение</div></div>
+      <div class="pay-hero"><div class="ph-tag">Зачислена зарплата · 10:00</div><div class="ph-amount">+185 000 <span>₽</span></div><div class="ph-sub">ООО «Технологии» · •4511</div></div>
+      <div style="padding:4px 20px 6px;"><div style="font-size:13px;color:#888;">AI распределил:</div></div>
+      <div class="card" style="padding:8px 16px;">
+        <div class="dist-item"><div class="dist-icon" style="background:#fff3e0;">🏠</div><div class="dist-info"><div class="dist-name">ЖКХ и связь</div><div class="dist-desc">4 автоплатежа</div></div><div class="dist-val">12 400 ₽</div></div>
+        <div class="dist-divider"></div>
+        <div class="dist-item"><div class="dist-icon" style="background:#e8f5e9;">🎯</div><div class="dist-info"><div class="dist-name">Цели</div><div class="dist-desc">Отпуск + Подушка</div></div><div class="dist-val green">23 500 ₽</div></div>
+        <div class="dist-divider"></div>
+        <div class="dist-item"><div class="dist-icon" style="background:#e3f2fd;">🏦</div><div class="dist-info"><div class="dist-name">Вклад 18%</div></div><div class="dist-val green">30 000 ₽</div></div>
+        <div class="dist-divider"></div>
+        <div class="dist-item"><div class="dist-icon" style="background:#f5f5f5;">💳</div><div class="dist-info"><div class="dist-name">Свободные</div></div><div class="dist-val" style="font-size:17px;font-weight:700;">119 100 ₽</div></div>
+      </div>
+      <div style="padding:8px 20px 16px;display:flex;gap:8px;"><button class="btn-y" style="flex:1.5;">Подтвердить</button><button class="btn-o" style="flex:1;">Изменить</button></div>
+      <div style="height:90px;"></div>
+      <div class="bottom-bar"><input class="bb-input" placeholder="Переведи, оплати, спроси..."><button class="bb-mic">🎙</button></div>
+    </div>
+
+    <!-- GEO -->
+    <div class="scr" id="v3-c2">
+      <div class="topbar2"><div class="tb-ava">👤</div><div class="status-pill ok">● Авиапарк</div><div class="tb-sp"></div><div class="tb-ic">🔔</div></div>
+      <div class="geo-banner" style="background:#e8f5e9;margin-top:8px;"><div class="geo-icon">📍</div><div class="geo-text"><div class="geo-title">Кэшбэк 5% в Zara — карта •0809</div><div class="geo-sub">Повышенный до конца марта</div></div></div>
+      <div class="geo-banner" style="background:#fff9cc;"><div class="geo-icon">☕</div><div class="geo-text"><div class="geo-title">Starbucks в 50м — 3%</div><div class="geo-sub">Обычно берёте латте</div></div><div class="geo-action">→</div></div>
+      <div style="padding:14px 20px 8px;"><div style="font-size:13px;color:#888;">Доступно</div><div style="font-size:28px;font-weight:700;color:#1a1a1a;">119 100 ₽</div></div>
+      <div style="padding:0 20px 8px;display:flex;gap:8px;">
+        <div style="flex:1;background:#f5f5f5;border-radius:14px;padding:12px;"><div style="font-size:12px;color:#888;">Покупки</div><div style="font-size:16px;font-weight:700;color:#1a1a1a;">8 200 / 15 000</div><div style="height:4px;background:#e0e0e0;border-radius:2px;margin-top:6px;overflow:hidden;"><div style="height:100%;width:55%;background:#ffd800;border-radius:2px;"></div></div></div>
+        <div style="flex:1;background:#f5f5f5;border-radius:14px;padding:12px;"><div style="font-size:12px;color:#888;">Рестораны</div><div style="font-size:16px;font-weight:700;color:#1a1a1a;">6 580 / 15 000</div><div style="height:4px;background:#e0e0e0;border-radius:2px;margin-top:6px;overflow:hidden;"><div style="height:100%;width:44%;background:#34a853;border-radius:2px;"></div></div></div>
+      </div>
+      <div class="action-card ac-highlight" style="border-color:#e8f5e9;"><div class="ac-top"><span class="ac-label">🧠 AI-совет</span><div class="ai-b"><div class="ai-d"></div> AI</div></div><div class="ac-title">Подождите с Zara</div><div class="ac-sub">Через 5 дней распродажа −30%</div></div>
+      <div style="height:90px;"></div>
+      <div class="bottom-bar"><input class="bb-input" placeholder="Переведи, оплати, спроси..."><button class="bb-mic">🎙</button></div>
+    </div>
+
+    <!-- EVENING -->
+    <div class="scr" id="v3-c3">
+      <div class="topbar2"><div class="tb-ava">👤</div><div class="status-pill ok">● День закрыт</div><div class="tb-sp"></div><div class="tb-ic">🔔</div></div>
+      <div style="padding:8px 20px 4px;"><div style="font-size:22px;font-weight:700;color:#1a1a1a;">Добрый вечер</div><div style="font-size:13px;color:#888;margin-top:4px;">Итоги сегодняшнего дня</div></div>
+      <div class="eve-summary">
+        <div class="eve-row"><span class="eve-label">Потрачено</span><span class="eve-val red">− 8 340 ₽</span></div>
+        <div style="height:1px;background:#e8e8e8;"></div>
+        <div class="eve-row"><span class="eve-label">Кэшбэк</span><span class="eve-val green">+ 412 ₽</span></div>
+        <div style="height:1px;background:#e8e8e8;"></div>
+        <div class="eve-row"><span class="eve-label">Автооплата</span><span class="eve-val">ЖКХ 4 200 ₽</span></div>
+        <div style="height:1px;background:#e8e8e8;"></div>
+        <div class="eve-row"><span class="eve-label">В цели</span><span class="eve-val green">+ 840 ₽</span></div>
+      </div>
+      <div style="padding:8px 20px 6px;"><span style="font-size:15px;font-weight:600;color:#1a1a1a;">Сегодня</span></div>
+      <div class="card" style="padding:12px 16px;">
+        <div class="tx"><div class="tx-i" style="background:#fff3e0;">☕</div><div class="tx-m"><div class="tx-n">Starbucks</div><div class="tx-d">14:35 · Авиапарк</div></div><div class="tx-r"><div class="tx-a">− 590 ₽</div></div></div>
+        <div class="tx-div"></div>
+        <div class="tx"><div class="tx-i" style="background:#e8f5e9;">🏠</div><div class="tx-m"><div class="tx-n">ЖКХ</div><div class="tx-d">11:00 · Автоплатёж</div></div><div class="tx-r"><div class="tx-a">− 4 200 ₽</div></div></div>
+        <div class="tx-div"></div>
+        <div class="tx"><div class="tx-i" style="background:#fce4ec;">🍕</div><div class="tx-m"><div class="tx-n">Яндекс Еда</div><div class="tx-d">20:15</div></div><div class="tx-r"><div class="tx-a">− 1 890 ₽</div></div></div>
+      </div>
+      <div style="padding:12px 20px 6px;"><span style="font-size:15px;font-weight:600;color:#888;">Завтра</span></div>
+      <div class="card" style="padding:12px 16px;">
+        <div class="tx ftx"><div class="tx-i" style="background:#f3e5f5;">🎵</div><div class="tx-m"><div class="tx-n">Яндекс Плюс</div><div class="tx-d">Оплатим баллами</div></div><div class="tx-r"><div class="tx-a" style="text-decoration:line-through;color:#ccc;">− 299 ₽</div><div class="tx-cb">Бесплатно</div></div></div>
+      </div>
+      <div style="height:90px;"></div>
+      <div class="bottom-bar"><input class="bb-input" placeholder="Переведи, оплати, спроси..."><button class="bb-mic">🎙</button></div>
+    </div>
+
+    <!-- MONTH END -->
+    <div class="scr" id="v3-c4">
+      <div class="topbar2"><div class="tb-ava">👤</div><div class="tb-sp"></div><div class="ai-b"><div class="ai-d"></div> Итоги марта</div></div>
+      <div class="month-hero"><div class="mh-title">Март 2030 · Итоги</div><div class="mh-stat"><div class="mh-stat-item"><div class="mh-stat-val">−124 <span>к</span></div><div class="mh-stat-label">Расходы</div></div><div class="mh-stat-item"><div class="mh-stat-val">+215 <span>к</span></div><div class="mh-stat-label">Доходы</div></div><div class="mh-stat-item"><div class="mh-stat-val" style="color:#34a853;">+91 <span>к</span></div><div class="mh-stat-label">Накоплено</div></div></div><div class="mh-decisions">AI принял <b>47 решений</b> за вас</div></div>
+      <div style="padding:12px 20px 8px;"><span style="font-size:17px;font-weight:600;color:#1a1a1a;">Что сделал AI</span></div>
+      <div class="card" style="padding:12px 16px;">
+        <div class="achievement"><div class="ach-icon">💸</div><div class="ach-info"><div class="ach-name">Оплатил 8 счетов</div></div><div class="ach-badge">0 просрочек</div></div>
+        <div class="tx-div"></div>
+        <div class="achievement"><div class="ach-icon">🎯</div><div class="ach-info"><div class="ach-name">Отложил 23 500 ₽</div></div><div class="ach-badge">+12%</div></div>
+        <div class="tx-div"></div>
+        <div class="achievement"><div class="ach-icon">🚫</div><div class="ach-info"><div class="ach-name">Отменил 2 подписки</div></div><div class="ach-badge">−898 ₽/мес</div></div>
+        <div class="tx-div"></div>
+        <div class="achievement"><div class="ach-icon">📍</div><div class="ach-info"><div class="ach-name">Подсказал карту 6 раз</div></div><div class="ach-badge">+2 340 ₽</div></div>
+      </div>
+      <div style="margin:0 20px 10px;background:#e8f5e9;border-radius:20px;padding:18px;text-align:center;"><div style="font-size:13px;color:#2e7d32;font-weight:500;margin-bottom:4px;">AI сэкономил в марте</div><div style="font-size:32px;font-weight:700;color:#2e7d32;">6 475 ₽</div></div>
+      <div class="action-card"><div class="ac-top"><span class="ac-label">📋 План на апрель</span><div class="ai-b"><div class="ai-d"></div> AI</div></div><div class="ac-sub" style="margin-top:4px;line-height:1.5;">Увеличить накопление +2 000 ₽. Нашёл тариф дешевле на 150 ₽/мес.</div><div class="ac-actions"><button class="ac-btn-primary">Применить</button><button class="ac-btn-secondary">Посмотреть</button></div></div>
+      <div style="height:90px;"></div>
+      <div class="bottom-bar"><input class="bb-input" placeholder="Переведи, оплати, спроси..."><button class="bb-mic">🎙</button></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const descs = [
+  'Классический банковский интерфейс с 4 экранами и стандартной навигацией',
+  'AI-фичи внутри привычного интерфейса: прогнозы, чат-ассистент, автоплатежи',
+  'Радикальный контекстный интерфейс: один экран, который адаптируется к жизни'
+];
+
+function switchVer(i) {
+  document.querySelectorAll('.version').forEach(v => v.classList.remove('on'));
+  document.getElementById('v' + (i+1)).classList.add('on');
+  document.querySelectorAll('.ver-tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.ver-tab')[i].classList.add('on');
+  document.getElementById('ver-desc').textContent = descs[i];
+}
+
+function v1go(id) {
+  document.querySelectorAll('#v1 .scr').forEach(s => s.classList.remove('on'));
+  document.getElementById('v1-' + id).classList.add('on');
+  document.getElementById('v1-' + id).scrollTop = 0;
+  document.querySelectorAll('#v1 .nt').forEach(t => t.classList.remove('on'));
+  const m = {home:0,payments:1,history:2,profile:3};
+  if (m[id] !== undefined) document.querySelectorAll('#v1 .nt')[m[id]].classList.add('on');
+}
+
+function v2go(id) {
+  document.querySelectorAll('#v2 .scr').forEach(s => s.classList.remove('on'));
+  document.getElementById('v2-' + id).classList.add('on');
+  document.getElementById('v2-' + id).scrollTop = 0;
+  document.querySelectorAll('#v2 .nt').forEach(t => t.classList.remove('on'));
+  const m = {home:0,hist:1,pay:2,chat:3,more:4};
+  if (m[id] !== undefined) document.querySelectorAll('#v2 .nt')[m[id]].classList.add('on');
+}
+
+function v3show(i) {
+  document.querySelectorAll('#v3 .scr').forEach(s => s.classList.remove('on'));
+  document.getElementById('v3-c'+i).classList.add('on');
+  document.getElementById('v3-c'+i).scrollTop = 0;
+  document.querySelectorAll('.ctx-tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.ctx-tab')[i].classList.add('on');
+  const times = ['8:47','10:00','14:20','21:30','9:15'];
+  document.getElementById('v3clk').textContent = times[i];
+}
+
+// Filter chips
+document.querySelectorAll('.h-filter').forEach(f => f.addEventListener('click', () => {
+  document.querySelectorAll('.h-filter').forEach(x => x.classList.remove('active')); f.classList.add('active');
+}));
+document.querySelectorAll('.hf').forEach(f => f.addEventListener('click', () => {
+  document.querySelectorAll('.hf').forEach(x => x.classList.remove('on')); f.classList.add('on');
+}));
+
+// Clock
+function tick() {
+  const n = new Date();
+  const t = n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+  document.querySelectorAll('.clk').forEach(c => c.textContent = t);
+}
+tick(); setInterval(tick, 30000);
+</script>
+</body>
+</html>
